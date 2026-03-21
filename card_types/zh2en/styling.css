@@ -1,0 +1,50 @@
+hr {
+    height: 3px;
+    background: white;
+    border: none;
+    margin: 20px 0;
+}
+
+.hanzi {
+    font-family: Hei;
+    font-size: 78px;
+    margin-top: 20px;
+    border-bottom: 3px solid rgba(0, 0, 0, 0);
+    transition:
+        border 0.5s ease,
+        padding 0.5s ease;
+}
+
+.hanzi.whover {
+    cursor: pointer;
+    position: relative;
+}
+
+.hanzi.whover::before {
+    content: var(--pinyin);
+    position: absolute;
+    font-family: Palatino;
+    font-size: 22px;
+    color: #55dd55;
+    padding: 0 10px 5px 10px;
+    border-left: 3px solid white;
+    transform: translate(-10px, -40px);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    height: 140px;
+}
+
+.hanzi.whover:hover::before {
+    opacity: 1;
+}
+
+.pinyin {
+    font-family: Palatino;
+    font-size: 22px;
+    color: #55dd55;
+}
+
+.english {
+    font-family: Didot;
+    font-size: 16px;
+}
