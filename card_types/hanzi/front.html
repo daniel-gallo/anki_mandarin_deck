@@ -1,0 +1,172 @@
+<div class="prompt">
+    <span class="english">{{English}}</span>
+    <span class="pinyin">{{Pinyin}}</span>
+</div>
+
+<div class="canvas-wrap">
+    <canvas id="hanzi-canvas" width="300" height="300"></canvas>
+    <div class="btn-row">
+        <button id="undo-btn">Undo</button>
+        <button id="clr-btn">Clear</button>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var canvas = document.getElementById("hanzi-canvas");
+        var ctx = canvas.getContext("2d");
+        var dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        var dpr = window.devicePixelRatio || 1;
+        var size = 300;
+
+        canvas.width = size * dpr;
+        canvas.height = size * dpr;
+        canvas.style.width = size + "px";
+        canvas.style.height = size + "px";
+        ctx.scale(dpr, dpr);
+
+        var gridColor = dark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.1)";
+        var strokeColor = dark ? "#eee" : "#111";
+
+        var drawing = false;
+        var strokes = [];
+        var current = [];
+
+        function drawGrid() {
+            ctx.save();
+            ctx.strokeStyle = gridColor;
+            ctx.lineWidth = 1;
+            ctx.strokeRect(0.5, 0.5, size - 1, size - 1);
+            ctx.beginPath();
+            ctx.setLineDash([4, 4]);
+            ctx.moveTo(size / 2, 0);
+            ctx.lineTo(size / 2, size);
+            ctx.moveTo(0, size / 2);
+            ctx.lineTo(size, size / 2);
+            ctx.moveTo(0, 0);
+            ctx.lineTo(size, size);
+            ctx.moveTo(size, 0);
+            ctx.lineTo(0, size);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.restore();
+        }
+
+        function drawAll() {
+            var bg = dark ? "#1a1a1a" : "#ffffff";
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, size, size);
+            drawGrid();
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 4;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            for (var i = 0; i < strokes.length; i++) {
+                var s = strokes[i];
+                if (s.length < 2) continue;
+                ctx.beginPath();
+                ctx.moveTo(s[0][0], s[0][1]);
+                for (var j = 1; j < s.length; j++) ctx.lineTo(s[j][0], s[j][1]);
+                ctx.stroke();
+            }
+        }
+
+        function pos(e) {
+            var r = canvas.getBoundingClientRect();
+            var src = e.touches ? e.touches[0] : e;
+            return [src.clientX - r.left, src.clientY - r.top];
+        }
+
+        drawAll();
+
+        document
+            .getElementById("clr-btn")
+            .addEventListener("click", function () {
+                strokes = [];
+                drawAll();
+            });
+
+        document
+            .getElementById("undo-btn")
+            .addEventListener("click", function () {
+                if (strokes.length) {
+                    strokes.pop();
+                    drawAll();
+                }
+            });
+
+        canvas.addEventListener("mousedown", function (e) {
+            drawing = true;
+            current = [pos(e)];
+        });
+        canvas.addEventListener("mousemove", function (e) {
+            if (!drawing) return;
+            current.push(pos(e));
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 4;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            ctx.beginPath();
+            ctx.moveTo(
+                current[current.length - 2][0],
+                current[current.length - 2][1],
+            );
+            ctx.lineTo(
+                current[current.length - 1][0],
+                current[current.length - 1][1],
+            );
+            ctx.stroke();
+        });
+        canvas.addEventListener("mouseup", function () {
+            drawing = false;
+            if (current.length) strokes.push(current);
+            current = [];
+        });
+        canvas.addEventListener("mouseleave", function () {
+            if (drawing) {
+                drawing = false;
+                if (current.length) strokes.push(current);
+                current = [];
+            }
+        });
+        canvas.addEventListener(
+            "touchstart",
+            function (e) {
+                e.preventDefault();
+                drawing = true;
+                current = [pos(e)];
+            },
+            { passive: false },
+        );
+        canvas.addEventListener(
+            "touchmove",
+            function (e) {
+                e.preventDefault();
+                if (!drawing) return;
+                current.push(pos(e));
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = 4;
+                ctx.lineCap = "round";
+                ctx.lineJoin = "round";
+                ctx.beginPath();
+                if (current.length >= 2) {
+                    ctx.moveTo(
+                        current[current.length - 2][0],
+                        current[current.length - 2][1],
+                    );
+                    ctx.lineTo(
+                        current[current.length - 1][0],
+                        current[current.length - 1][1],
+                    );
+                    ctx.stroke();
+                }
+            },
+            { passive: false },
+        );
+        canvas.addEventListener("touchend", function () {
+            drawing = false;
+            if (current.length) strokes.push(current);
+            current = [];
+        });
+    })();
+</script>
